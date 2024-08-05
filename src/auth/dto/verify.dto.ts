@@ -3,7 +3,7 @@ import { IsNotEmpty, IsNumber, IsString, Length, Min, min, MinLength } from 'cla
 export class verDto {
   @IsNotEmpty()
   @IsNumber()
-  id: string;
+  id: number;
   @IsNotEmpty()
   @IsString()
   @Length(6)

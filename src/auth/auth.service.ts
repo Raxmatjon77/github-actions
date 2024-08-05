@@ -1,15 +1,19 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthDto } from './dto/auth.dto';
 import { IsPhoneNumber } from 'class-validator';
 import { verify } from 'crypto';
 import axios from 'axios';
+import { Tokens } from './types/type.tokens';
+import { JwtService } from '@nestjs/jwt';
 import { verDto } from './dto/verify.dto';
+import * as bcrypt from 'bcrypt';
+import { access } from 'fs';
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
-    // private JWTServise: JwtService,
+    private jwt: JwtService,
   ) {}
 
   async signin(dto: AuthDto) {
@@ -19,92 +23,163 @@ export class AuthService {
       },
     });
 
-    
-    const code = generateOTP()
-    if(existUser){
-    const otp = await this.prisma.otp.create({
-      data:{
-        otp:code,
-        user_id: existUser.id
-      }
-    });
-    await axios
-      .post(
-        process.env.SMS_URL,
-        {
-          to: existUser.phoneNumber,
-          message: `sizning otp kodingiz: ${code} `,
+    const code = generateOTP();
+    if (existUser) {
+      const otp = await this.prisma.otp.create({
+        data: {
+          otp: code,
+          user_id: existUser.id,
         },
-        {
-          headers: {
-            Authorization:`${process.env.SMS_SECRET_TOKEN}`,
-          },
-        },
-      )
-      .then((res)=>console.log(res?.data?.responses[0])
-      )
-      .catch((e) => {
-        console.log(e);
       });
-       return {
-         id: existUser.id,
-         code,
-         message: 'signin',
-       };
-    }
-
-    else if(!existUser){
-      const newUser= await this.prisma.user.create({
-        data:{
-          phoneNumber:dto.phoneNumber
-        }
-      })
-        const otp = await this.prisma.otp.create({
-          data: {
-            otp: code,
-            user_id: newUser.id,
-         
-          },
-        });
-        
-        await axios
+      await axios
         .post(
-        process.env.SMS_URL,
-        {
-          to: newUser.phoneNumber,
-          message: `sizning otp kodingiz: ${code} `,
-        },
-        {
-          headers: {
-            Authorization:`${process.env.SMS_SECRET_TOKEN}`,
+          process.env.SMS_URL,
+          {
+            to: existUser.phoneNumber,
+            message: `sizning otp kodingiz: ${code} `,
           },
-        },
-      ).then().catch((e)=>{
-         throw new NotFoundException(e?.messae)
+          {
+            headers: {
+              Authorization: `${process.env.SMS_SECRET_TOKEN}`,
+            },
+          },
+        )
+        .then((res) => console.log(res?.data?.responses[0]))
+        .catch((e) => {
           console.log(e);
-          
         });
-        console.log(newUser.phoneNumber);
-         return {
-          id:newUser.id,
-           code,
-           message: 'signin',
-         };
-        
+      return {
+        id: existUser.id,
+        code,
+        message: 'signin',
+      };
+    } else if (!existUser) {
+      const newUser = await this.prisma.user.create({
+        data: {
+          phoneNumber: dto.phoneNumber,
+        },
+      });
+      const otp = await this.prisma.otp.create({
+        data: {
+          otp: code,
+          user_id: newUser.id,
+        },
+      });
+
+      await axios
+        .post(
+          process.env.SMS_URL,
+          {
+            to: newUser.phoneNumber,
+            message: `sizning otp kodingiz: ${code} `,
+          },
+          {
+            headers: {
+              Authorization: `${process.env.SMS_SECRET_TOKEN}`,
+            },
+          },
+        )
+        .then()
+        .catch((e) => {
+          throw new NotFoundException(e?.messae);
+          console.log(e);
+        });
+      console.log(newUser.phoneNumber);
+      return {
+        id: newUser.id,
+        code,
+        message: 'signin',
+      };
     }
     console.log(existUser);
-  
-    
-    
-   return new InternalServerErrorException('Internal server error')
+
+    return new InternalServerErrorException('Internal server error');
   }
 
-async verify(dto:verDto){
-return {
-  message:"verify"
+  async verify(dto: verDto) {
+
+       let userVerify = await this.prisma.otp.findMany({
+        where: {
+          user_id: dto.id,
+        },
+      })
+      
+        let user = await this.prisma.user.findUnique({
+          where: {
+            id: dto.id,
+          },
+        });
+   
+    console.log(userVerify[userVerify.length - 1]);
+
+    if (userVerify.length < 1) {
+      return new NotFoundException('no user found');
+    } else if (userVerify.length >= 1) {
+      if (
+        userVerify[userVerify.length - 1].otp == dto.code 
+        // calculateTimeDifference(userVerify[userVerify.length - 1].created_at) <=
+        //   120
+      ) {
+        const tokens = await this.getTokens(dto.id, user.phoneNumber);
+        await this.updateRtHash(user.id, tokens.refresh_token);
+        {
+          return {
+            message: 'success !',
+            access: tokens.access_token,
+            refresh: tokens.refresh_token,
+          };
+        }
+      } else {
+        return new BadRequestException('wrong otp code or time is up !');
+      }
+    }
+
+    return new InternalServerErrorException('');
+  }
+  hashdata(data: string): string {
+    const hasheddata = bcrypt.hashSync(data, 10);
+    return hasheddata;
+  }
+  async getTokens(UserId: number, phoneNumber: string): Promise<Tokens> {
+    const [at, rt] = await Promise.all([
+      this.jwt.signAsync(
+        {
+          sub: UserId,
+          phoneNumber,
+        },
+        {
+          expiresIn: 60 * 15,
+          secret: process.env.JWT_AT_SECRET,
+        },
+      ),
+      this.jwt.signAsync(
+        {
+          sub: UserId,
+          phoneNumber,
+        },
+        {
+          expiresIn: 60 * 60 * 24 * 7,
+          secret: process.env.JWT_RT_SECRET,
+        },
+      ),
+    ]);
+    return {
+      message: 'success !',
+      access_token: at,
+      refresh_token: rt,
+    };
+  }
+  async updateRtHash(id: number, rt: string) {
+    const updatedRt = this.hashdata(rt);
+    await this.prisma.user.update({
+      where: { id: id },
+      data: {
+        hashedRt: updatedRt,
+      },
+    });
+  }
 }
-}
-}
+
 function generateOTP():string {
   let otp:string = '';
   const digits = '0123456789';
@@ -114,7 +189,7 @@ function generateOTP():string {
   return otp;
 }
 
-    const calculateTimeDifference = (eventTime:Date) => {
+const calculateTimeDifference = (eventTime:Date) => {
       return (
         Math.floor(Date.now() / 1000) -
         Math.floor(new Date(eventTime).getTime() / 1000)
