@@ -7,7 +7,7 @@ export class MainappController {
   constructor(private app: MainappService) {}
 
   @Post('/setconf')
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   signUp(@Body() dto: confDto) {
     return this.app.setConfig(dto)
   }
