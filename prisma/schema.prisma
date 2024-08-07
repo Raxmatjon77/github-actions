@@ -23,6 +23,14 @@ model User {
   firstTime  DateTime? 
   hashedRt String?
   status String? @default("guest")
+  bomdod Int?
+  peshin Int?
+  asr Int?
+  shom Int?
+  xufton Int?
+  qazaPrayers    QazaPrayer[]
+
+  
 
   @@map("users")                                    
 }
@@ -33,3 +41,16 @@ model User {
   otp String?
   created_at DateTime @default(now()) 
  }
+ model QazaPrayer {
+  id     Int      @id @default(autoincrement())
+  date   DateTime
+  fajr   Boolean
+  dhuhr  Boolean
+  asr    Boolean
+  maghrib Boolean
+  isha   Boolean
+  userId Int
+  user   User     @relation(fields: [userId], references: [id])
+
+ 
+}

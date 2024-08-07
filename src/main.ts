@@ -6,7 +6,7 @@ import { config } from 'dotenv';
 config()
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-    app.use(new LoggerMiddleware().use);
+   app.use(new LoggerMiddleware().use);
   app.useGlobalPipes(new ValidationPipe());
   const PORT=process.env.PORT
   await app.listen(PORT,()=>{
