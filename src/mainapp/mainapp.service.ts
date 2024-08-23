@@ -67,12 +67,13 @@ export class MainappService {
           console.log(e);
         });
 
-      await this.createMissedPrayers(dto.id)
-      // console.log( await this.calculateMissedPrayers(1));
-      // await this.calculateMissedPrayers(1);
+  // const  prayer =  await this.createMissedPrayers(dto.id)
+      console.log( await this.calculateMissedPrayers(1));
+      await this.calculateMissedPrayers(1);
       return {
-        message:"ok"
-      }
+        message: 'ok',
+        // parayer: prayer,
+      };
     } catch (error) {
       console.log(error);
       throw error;
@@ -86,20 +87,22 @@ export class MainappService {
 
     const { birthDate, firstTime, NamazStartes } = user;
     const missedPrayers = [];
-    // console.log(
-    //   'date',
-    //   new Date(NamazStartes).toLocaleDateString() == '05/07/2024',
-    // );
+    console.log(
+      'date',
+      new Date(NamazStartes).toLocaleDateString() == '05/07/2024',
+    );
     //  console.log(
     //    'date1',
     //    new Date(NamazStartes).toLocaleDateString()
     //  );
-    // const date = new Date(NamazStartes).toISOString();
-    // console.log(
-    //   'date3',
-    //   date.substring(0, date.indexOf('T')) ==
-    //     new Date('2024-07-05T15:14:14.539Z').toISOString().substring(0, date.indexOf('T')),
-    // );
+    const date = new Date(NamazStartes).toISOString();
+    console.log(
+      'date3',
+      date.substring(0, date.indexOf('T')) ==
+        new Date('2024-07-05T15:14:14.539Z').toISOString().substring(0, date.indexOf('T')),
+    );
+    console.log(date.substring(0, date.indexOf('T')));
+    
     const currentDate = new Date();
     let currentDateCheck = new Date(firstTime);
 
@@ -116,11 +119,12 @@ export class MainappService {
           isha: isBeforeNamazBegunDay,
           userId: user.id,
         });
-        console.log(currentDateCheck);
+      
         currentDateCheck.setDate(currentDateCheck.getDate() + 1);
       
     }
-
+  
+    
     return missedPrayers;
   }
   async createMissedPrayers(userId: number) {
