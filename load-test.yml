@@ -1,13 +1,13 @@
 config:
   target: 'http://localhost:4001'  # Your NestJS app URL
   phases:
-    - duration: 60
-      arrivalRate: 40  # 10 new users per second
+    - duration: 120
+      arrivalRate: 50  # 10 new users per second
 scenarios:
   - flow:
    
       - post:
           url: "/auth/verify"
           json:
-            key1: 1
-            key2: "value2"
+            id: 1
+            code: "value2"
