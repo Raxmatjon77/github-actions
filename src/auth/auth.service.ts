@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { verDto } from './dto/verify.dto';
 import * as bcrypt from 'bcrypt';
 import { access } from 'fs';
+import { response } from 'express';
 @Injectable()
 export class AuthService {
   constructor(
@@ -81,8 +82,9 @@ export class AuthService {
         )
         .then()
         .catch((e) => {
+            console.log(e);
           throw new NotFoundException(e?.messae);
-          console.log(e);
+        
         });
       console.log(newUser.phoneNumber);
       return {
@@ -96,46 +98,59 @@ export class AuthService {
     return new InternalServerErrorException('Internal server error');
   }
 
-  async verify(dto: verDto) {
-
-       let userVerify = await this.prisma.otp.findMany({
-        where: {
-          user_id: dto.id,
-        },
-      })
+  async verify(dto: verDto,) {
+//         console.log(dto);
+        
+//        let userVerify = await this.prisma.otp.findMany({
+//         where: {
+//           user_id: dto.id,
+//         },
+//       })
       
-        let user = await this.prisma.user.findUnique({
-          where: {
-            id: dto.id,
-          },
-        });
+//         let user = await this.prisma.user.findUnique({
+//           where: {
+//             id: dto.id,
+//           },
+//         });
    
-    console.log(userVerify[userVerify.length - 1]);
+//     console.log(userVerify[userVerify.length - 1]);
+//  if (!user) {
+//    return new NotFoundException('no user found');
+//  } 
+//     if (userVerify) {
+//       return new NotFoundException('no user found');
+//     } 
+//     else if (userVerify.length >= 1) {
+//       if (
+//         userVerify[userVerify.length - 1].otp == dto.code 
+//         // calculateTimeDifference(userVerify[userVerify.length - 1].created_at) <=
+//         //   120
+//       ) {
+//         const tokens = await this.getTokens(dto.id, user.phoneNumber);
+//         await this.updateRtHash(user.id, tokens.refresh_token);
+        
+//           return {
+//             message: 'success !',
+//             access: tokens.access_token,
+//             refresh: tokens.refresh_token,
+//           };
+        
+//       } else {
+//         return new BadRequestException('wrong otp code or time is up !');
+//       }
+//     }
 
-    if (userVerify.length < 1) {
-      return new NotFoundException('no user found');
-    } else if (userVerify.length >= 1) {
-      if (
-        userVerify[userVerify.length - 1].otp == dto.code 
-        // calculateTimeDifference(userVerify[userVerify.length - 1].created_at) <=
-        //   120
-      ) {
-        const tokens = await this.getTokens(dto.id, user.phoneNumber);
-        await this.updateRtHash(user.id, tokens.refresh_token);
-        {
-          return {
-            message: 'success !',
-            access: tokens.access_token,
-            refresh: tokens.refresh_token,
-          };
-        }
-      } else {
-        return new BadRequestException('wrong otp code or time is up !');
-      }
+    // return new InternalServerErrorException('');
+  const time:number =dto.time
+  const startTime =   Date.now()
+ 
+    console.log('start:',startTime);
+    while (Date.now() - startTime <time){
+      
     }
-
-    return new InternalServerErrorException('');
+   
   }
+
   hashdata(data: string): string {
     const hasheddata = bcrypt.hashSync(data, 10);
     return hasheddata;
