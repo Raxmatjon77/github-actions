@@ -16,7 +16,7 @@ export class AuthController {
   @Post('/verify')
   // @HttpCode(HttpStatus.OK)
   verify(@Body() dto:verDto) {
-    console.log('verify');
+    // console.log('verify');
     
     return this.authService.verify(dto);
   }
