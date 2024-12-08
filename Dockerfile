@@ -1,19 +1,14 @@
 FROM node:18.16.0-alpine AS build
 
 ENV TZ UTC
-ENV NODE_ENV deveploment
+ENV NODE_ENV production
 
 WORKDIR /app
 
-COPY .npmrc .npmrc
 COPY .eslintrc .eslintrc
 COPY .prettierrc .prettierrc
-COPY .eslintignore .eslintignore
-COPY .prettierignore .prettierignore
-COPY .editorconfig .editorconfig
 COPY package.json package.json
 COPY tsconfig.json tsconfig.json
-COPY tsconfig.build.json tsconfig.build.json
 COPY nest.config.json nest.config.json
 COPY src src
 COPY prisma prisma
