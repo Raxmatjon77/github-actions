@@ -15,7 +15,7 @@ RUN corepack enable
 RUN corepack prepare pnpm@latest --activate
 RUN pnpm config set store-dir .pnpm
 RUN pnpm install --no-frozen-lockfile
-RUN pnpm fmt
+
 RUN pnpm build
 RUN pnpm prune --prod
 
