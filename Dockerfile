@@ -15,7 +15,6 @@ COPY package.json package.json
 COPY tsconfig.json tsconfig.json
 COPY tsconfig.build.json tsconfig.build.json
 COPY nest.config.json nest.config.json
-COPY pnpm-lock.yaml pnpm-lock.yaml
 COPY src src
 COPY prisma prisma
 
