@@ -1,8 +1,16 @@
-create_file:
-   image: alpine
-   script: 
-     - echo "building ... ."
-     - mkdir build
-     - touch build/file.txt
+stages:
+  - build
+  - deploy
+
+build-job:
+  stage: build
+  script:
+    -docker build -t qazo-namoz-image .
+
+deploy-job:
+  stage: deploy
+  script: 
+  - docker-compose up -d
+
 
 
