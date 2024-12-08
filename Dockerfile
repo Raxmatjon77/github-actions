@@ -15,9 +15,9 @@ RUN corepack enable
 RUN corepack prepare pnpm@latest --activate
 RUN pnpm config set store-dir .pnpm
 RUN pnpm install --no-frozen-lockfile
-
-RUN pnpm build
-RUN pnpm prune --prod
+RUN npm  run build
+# RUN pnpm build
+# RUN pnpm prune --prod
 
 FROM node:18.16.0-alpine
 
@@ -34,6 +34,6 @@ COPY --from=build --chown=node:node /app/dist dist
 COPY --from=build --chown=node:node /app/prisma prisma
 COPY --from=build --chown=node:node /app/node_modules node_modules
 COPY --from=build --chown=node:node /app/package.json package.json
-COPY --from=build --chown=node:node /app/pnpm-lock.yaml pnpm-lock.yaml
+# COPY --from=build --chown=node:node /app/pnpm-lock.yaml pnpm-lock.yaml
 
 CMD npx prisma migrate deploy && node dist/main.js
