@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  phoneNumber      String  @unique 
+  firstName String?
+  lastName String?
+  birthDate  DateTime?
+  NamazStartes  DateTime?
+  firstTime  DateTime? 
+  hashedRt String?
+  status String? @default("guest")
+  bomdod Int?
+  peshin Int?
+  asr Int?
+  shom Int?
+  xufton Int?
+  qazaPrayers    QazaPrayer[]
+
+  
+
+  @@map("users")                                    
+}
+
+ model otp{
+    id        Int      @id @default(autoincrement())
+  user_id      Int 
+  otp String?
+  created_at DateTime @default(now()) 
+ }
+ model QazaPrayer {
+  id     Int      @id @default(autoincrement())
+  date   DateTime
+  fajr   Boolean
+  dhuhr  Boolean
+  asr    Boolean
+  maghrib Boolean
+  isha   Boolean
+  userId Int
+  user   User     @relation(fields: [userId], references: [id])
+
+ 
+}
