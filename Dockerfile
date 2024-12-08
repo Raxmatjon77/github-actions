@@ -5,8 +5,6 @@ ENV NODE_ENV production
 
 WORKDIR /app
 
-COPY .eslintrc .eslintrc
-COPY .prettierrc .prettierrc
 COPY package.json package.json
 COPY tsconfig.json tsconfig.json
 COPY nest.config.json nest.config.json
