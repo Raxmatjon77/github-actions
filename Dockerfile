@@ -14,8 +14,9 @@ RUN npm install
 COPY . .
 
 # Build the application
-RUN npm run build
 
+RUN npx prisma generate
+RUN npm run build
 # Remove development dependencies
 RUN npm prune --production
 
