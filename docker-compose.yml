@@ -4,5 +4,23 @@ services:
     container_name: qazo-namoz
     ports:
       - 80:3000
-    command: "npm run start:prod"
-    
+    environment:
+      NODE_ENV: production
+  
+  restart: always
+
+
+# version: '3.8'
+
+# services:
+#   app:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     ports:
+#       - "3000:3000"
+#     environment:
+#       NODE_ENV: production
+#     volumes:
+#       - .:/app
+#     restart: always
