@@ -28,7 +28,7 @@ services:
     networks:
       - app-network
   db:
-    image: postgres:latest
+    image: postgres
     container_name: postgres-db
     environment:
       POSTGRES_USER: ${DATABASE_USER}
