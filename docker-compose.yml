@@ -24,6 +24,8 @@ services:
       NODE_ENV: ${NODE_ENV}
       DATABASE_URL: ${DATABASE_URL}
       JWT_AT_SECRET: ${JWT_AT_SECRET}
+      JWT_RT_SECRET: ${JWT_RT_SECRET}
+
 
 
 # version: '3.8'
