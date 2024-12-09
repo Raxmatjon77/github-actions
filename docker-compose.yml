@@ -30,12 +30,18 @@ services:
   db:
     image: postgres
     container_name: postgres-db
+    ports:
+      - 5432:5432
+    networks:
+      - app-network
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_DATABASE}
-    networks:
-      - app-network
+   
+networks:
+  app-network:
+    driver: bridge
 
 
 
