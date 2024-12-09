@@ -13,7 +13,7 @@ COPY prisma prisma
 
 RUN corepack enable
 RUN corepack prepare pnpm@latest --activate
-RUN npm config set store-dir .npm
+# RUN npm config set store-dir .npm
 RUN npm install 
 RUN npm  run build
 # RUN pnpm build
