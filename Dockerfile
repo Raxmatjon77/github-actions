@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy package.json and package-lock.json files
 COPY package*.json ./
 
-# Install all dependencies, including dev dependencies
+# Install production dependencies
 RUN npm install
 
 # Copy the rest of the application code
@@ -16,8 +16,12 @@ COPY . .
 # Build the application
 RUN npm run build
 
+# Remove development dependencies
+RUN npm prune --production
+
 # Expose the application port
 EXPOSE 3000
 
 # Start the application
 CMD ["node", "dist/main.js"]
+

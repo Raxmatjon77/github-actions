@@ -1,12 +1,29 @@
+# services:
+#   backend:
+#     image: qazo-namoz-image:latest
+#     container_name: qazo-namoz
+#     ports:
+#       - 3000:3000
+#     environment:
+#       - NODE_ENV=${NODE_ENV}
+#       - DATABASE_URL=${DATABASE_URL}
+#       - JWT_SECRET=${JWT_SECRET}
+#       - NODE_ENV =production
+  
+version: "3.9"
 services:
   backend:
     image: qazo-namoz-image:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: qazo-namoz
     ports:
-      - 3000:3000
+      - "3000:3000"
     environment:
-      NODE_ENV: production
-  
+      NODE_ENV: ${NODE_ENV}
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_AT_SECRET: ${JWT_AT_SECRET}
 
 
 # version: '3.8'
