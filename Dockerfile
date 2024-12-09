@@ -23,5 +23,5 @@ RUN npm prune --production
 EXPOSE 3000
 
 # Start the application
-CMD ["node", "dist/main.js"]
+CMD npx prisma migrate deploy && node dist/main.js
 
