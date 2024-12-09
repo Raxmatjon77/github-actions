@@ -13,8 +13,8 @@ COPY prisma prisma
 
 RUN corepack enable
 RUN corepack prepare pnpm@latest --activate
-RUN pnpm config set store-dir .pnpm
-RUN pnpm install --no-frozen-lockfile
+RUN npm config set store-dir .npm
+RUN npm install 
 RUN npm  run build
 # RUN pnpm build
 # RUN pnpm prune --prod
