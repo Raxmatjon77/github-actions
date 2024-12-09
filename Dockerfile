@@ -1,39 +1,23 @@
-FROM node:18.16.0-alpine AS build
+# Use the official Node.js image as a base image
+FROM node:20-alpine
 
-ENV TZ UTC
-ENV NODE_ENV production
-
+# Set the working directory inside the container
 WORKDIR /app
 
-COPY package.json package.json
-COPY tsconfig.json tsconfig.json
-COPY nest.config.json nest.config.json
-COPY src src
-COPY prisma prisma
+# Copy package.json and package-lock.json files
+COPY package*.json ./
 
-RUN corepack enable
-RUN corepack prepare pnpm@latest --activate
-# RUN npm config set store-dir .npm
-RUN npm install 
-RUN npm  run build
-# RUN pnpm build
-# RUN pnpm prune --prod
+# Install dependencies
+RUN npm install --production
 
-FROM node:18.16.0-alpine
+# Copy the rest of the application code
+COPY . .
 
-RUN apk add --no-cache tzdata curl
+# Build the application
+RUN npm run build
 
-ENV TZ Asia/Tashkent
-ENV NODE_ENV production
+# Expose the application port
+EXPOSE 3000
 
-USER node
-
-WORKDIR /app
-
-COPY --from=build --chown=node:node /app/dist dist
-COPY --from=build --chown=node:node /app/prisma prisma
-COPY --from=build --chown=node:node /app/node_modules node_modules
-COPY --from=build --chown=node:node /app/package.json package.json
-# COPY --from=build --chown=node:node /app/pnpm-lock.yaml pnpm-lock.yaml
-
-CMD npx prisma migrate deploy && node dist/main.js
+# Start the application
+CMD ["node", "dist/main.js"]
