@@ -3,7 +3,7 @@ services:
     image: qazo-namoz-image:latest
     container_name: qazo-namoz
     ports:
-      - 80:3000
+      - 3000:3000
     environment:
       NODE_ENV: production
   
