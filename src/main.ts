@@ -20,8 +20,8 @@ async function bootstrap() {
   app.use(new LoggerMiddleware().use);
   app.useGlobalPipes(new ValidationPipe());
   const PORT = process.env.PORT;
-  await app.listen(4001, () => {
-    console.log(`server started on port  ${4001}`);
+  await app.listen(3000, () => {
+    console.log(`server started on port  ${3000}`);
   });
 }
 
