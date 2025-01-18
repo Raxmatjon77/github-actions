@@ -1,30 +1,44 @@
-# Use the official Node.js image as a base image
-FROM node:20-alpine
+# Stage 1: Build the application
+FROM node:20-alpine AS builder
 
+# Install necessary tools
+RUN apk add --no-cache openssl
 
-RUN apk add openssl 
-# Set the working directory inside the container
+# Set the working directory
 WORKDIR /app
 
 # Copy package.json and package-lock.json files
 COPY package*.json ./
 
-# Install production dependencies
+# Install all dependencies
 RUN npm install
 
-# Copy the rest of the application code
+# Copy the application code
 COPY . .
 
-# Build the application
+# Generate Prisma client and build the application
+RUN npx prisma generate && npm run build
 
-RUN npx prisma generate
-RUN npm run build
 # Remove development dependencies
 RUN npm prune --production
+
+# Stage 2: Production image
+FROM node:20-alpine
+
+# Install necessary tools
+RUN apk add --no-cache openssl
+
+# Set the working directory
+WORKDIR /app
+
+# Copy production dependencies and built files from the builder stage
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/package*.json ./
 
 # Expose the application port
 EXPOSE 3000
 
-# Start the application
-CMD npx prisma migrate deploy && npm run start:prod
-
+# Set the command to run the application
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:prod"]
