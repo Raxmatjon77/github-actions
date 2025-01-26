@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString, Length, Min, min, MinLength } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, Length } from 'class-validator';
 
 export class verDto {
   @IsNotEmpty()

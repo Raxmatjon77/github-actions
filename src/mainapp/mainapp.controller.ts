@@ -1,8 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { confDto } from './dto/config.dto';
-import { Post,Body,HttpCode,HttpStatus } from '@nestjs/common';
+import { Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { MainappService } from './mainapp.service';
-import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 @ApiTags('mainapp')
 @Controller('mainapp')
 export class MainappController {
@@ -26,7 +26,6 @@ export class MainappController {
     return this.app.setConfig(dto);
   }
 
-
   @ApiOperation({ summary: 'change prayer settings' })
   @ApiBody({
     schema: {
@@ -49,6 +48,6 @@ export class MainappController {
   @HttpCode(HttpStatus.OK)
   verify(@Body() dto: confDto) {
     // return this.authService.verify(dto);
+    console.log(dto);
   }
-  
 }
