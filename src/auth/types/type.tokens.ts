@@ -1,5 +1,5 @@
 export type Tokens = {
-  message:string;
+  message: string;
   access_token: string;
   refresh_token: string;
 };

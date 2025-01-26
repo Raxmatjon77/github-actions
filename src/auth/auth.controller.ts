@@ -1,8 +1,8 @@
-import { Controller,Post,Get, } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
-import { Tokens } from './types/type.tokens';
-import { Body,HttpStatus,HttpCode,Query } from '@nestjs/common';
+// import { Tokens } from './types/type.tokens';
+import { Body, HttpStatus, HttpCode } from '@nestjs/common';
 import { verDto } from './dto/verify.dto';
 @Controller('auth')
 export class AuthController {
@@ -15,9 +15,9 @@ export class AuthController {
   }
   @Post('/verify')
   @HttpCode(HttpStatus.OK)
-  verify(@Body() dto:verDto) {
+  verify(@Body() dto: verDto) {
     console.log('verify');
-    
+
     return this.authService.verify(dto);
   }
 }

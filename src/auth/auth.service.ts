@@ -1,16 +1,16 @@
-import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthDto } from './dto/auth.dto';
-import { IsPhoneNumber } from 'class-validator';
-import { verify } from 'crypto';
 import axios from 'axios';
 import { Tokens } from './types/type.tokens';
 import { JwtService } from '@nestjs/jwt';
 import { verDto } from './dto/verify.dto';
 import * as bcrypt from 'bcryptjs';
-import { access } from 'fs';
-import { response } from 'express';
-import { error } from 'console';
 @Injectable()
 export class AuthService {
   constructor(
@@ -19,7 +19,7 @@ export class AuthService {
   ) {}
 
   async signin(dto: AuthDto) {
-    let existUser = await this.prisma.user.findUnique({
+    const existUser = await this.prisma.user.findUnique({
       where: {
         phoneNumber: dto.phoneNumber,
       },
@@ -27,7 +27,7 @@ export class AuthService {
 
     const code = generateOTP();
     if (existUser) {
-      const otp = await this.prisma.otp.create({
+      await this.prisma.otp.create({
         data: {
           otp: code,
           user_id: existUser.id,
@@ -61,7 +61,7 @@ export class AuthService {
           phoneNumber: dto.phoneNumber,
         },
       });
-      const otp = await this.prisma.otp.create({
+      await this.prisma.otp.create({
         data: {
           otp: code,
           user_id: newUser.id,
@@ -83,9 +83,8 @@ export class AuthService {
         )
         .then()
         .catch((e) => {
-            console.log(e);
+          console.log(e);
           throw new NotFoundException(e?.messae);
-        
         });
       console.log(newUser.phoneNumber);
       return {
@@ -99,52 +98,47 @@ export class AuthService {
     return new InternalServerErrorException('Internal server error');
   }
 
-  async verify(dto: verDto,) {
-//         console.log(dto);
-        
-       let userVerify = await this.prisma.otp.findMany({
-        where: {
-          user_id: dto.id,
-        },
-      })
-      
-        let user = await this.prisma.user.findUnique({
-          where: {
-            id: dto.id,
-          },
-        });
-   
-    // console.log(userVerify[userVerify.length - 1]);
- if (user) {
-   throw new NotFoundException('no user found');
- } 
-    if (!userVerify) {
+  async verify(dto: verDto) {
+    //         console.log(dto);
 
+    const userVerify = await this.prisma.otp.findMany({
+      where: {
+        user_id: dto.id,
+      },
+    });
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: dto.id,
+      },
+    });
+
+    // console.log(userVerify[userVerify.length - 1]);
+    if (user) {
+      throw new NotFoundException('no user found');
+    }
+    if (!userVerify) {
       throw new NotFoundException('no');
-    } 
-    else if (userVerify.length >= 1) {
+    } else if (userVerify.length >= 1) {
       if (
-        userVerify[userVerify.length - 1].otp == dto.code 
+        userVerify[userVerify.length - 1].otp == dto.code
         // calculateTimeDifference(userVerify[userVerify.length - 1].created_at) <=
         //   120
       ) {
         const tokens = await this.getTokens(dto.id, user.phoneNumber);
         await this.updateRtHash(user.id, tokens.refresh_token);
-        
-          return {
-            message: 'success !',
-            access: tokens.access_token,
-            refresh: tokens.refresh_token,
-          };
-        
+
+        return {
+          message: 'success !',
+          access: tokens.access_token,
+          refresh: tokens.refresh_token,
+        };
       } else {
         return new BadRequestException('wrong otp code or time is up !');
       }
     }
 
     return new InternalServerErrorException('');
-
-   
   }
 
   hashdata(data: string): string {
@@ -191,8 +185,8 @@ export class AuthService {
   }
 }
 
-function generateOTP():string {
-  let otp:string = '';
+function generateOTP(): string {
+  let otp: string = '';
   const digits = '0123456789';
   for (let i = 0; i < 6; i++) {
     otp += digits[Math.floor(Math.random() * 10)];
@@ -200,9 +194,9 @@ function generateOTP():string {
   return otp;
 }
 
-const calculateTimeDifference = (eventTime:Date) => {
-      return (
-        Math.floor(Date.now() / 1000) -
-        Math.floor(new Date(eventTime).getTime() / 1000)
-      );
-    };
+// const calculateTimeDifference = (eventTime: Date) => {
+//   return (
+//     Math.floor(Date.now() / 1000) -
+//     Math.floor(new Date(eventTime).getTime() / 1000)
+//   );
+// };
