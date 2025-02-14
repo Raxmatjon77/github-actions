@@ -51,6 +51,7 @@ model User {
   maghrib Boolean
   isha   Boolean
   userId Int
+  comment String? @map("comment")
   user   User     @relation(fields: [userId], references: [id])
 
  
