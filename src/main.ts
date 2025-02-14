@@ -19,7 +19,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
   app.use(new LoggerMiddleware().use);
   app.useGlobalPipes(new ValidationPipe());
-  const PORT = process.env.PORT;
+  // const PORT = process.env.PORT;
   await app.listen(3000);
 }
 

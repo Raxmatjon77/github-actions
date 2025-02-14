@@ -4,7 +4,7 @@ export class AuthDto {
   @IsNotEmpty()
   @IsString()
   phoneNumber: string;
-  code:string;
+  code: string;
   // @IsNotEmpty()
   // @IsString()
   // firstName: string;

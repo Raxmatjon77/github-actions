@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { Timestamp } from 'rxjs';
+// import { Timestamp } from 'rxjs';
 
 export class confDto {
   @IsNotEmpty()
