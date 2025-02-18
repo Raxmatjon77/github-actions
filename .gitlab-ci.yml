@@ -1,17 +1,64 @@
+# stages:
+#   - build
+#   - deploy
+
+# build-job:
+#   stage: build
+#   script:
+#     - docker build -t qazo-namoz-image .
+#   only:
+#     - main
+
+# deploy-job:
+#   stage: deploy
+#   script: 
+#     - docker-compose up -d
+#   only:
+#     - main
 stages:
   - build
   - deploy
 
+variables:
+  TELEGRAM_BOT_TOKEN: "8028072110:AAG5ERdmz3za_N5YXM9JPp8JTMO6XEqcAv8"
+  TELEGRAM_CHAT_ID: "1955031743"
+
+before_script:
+  - export JOB_STARTED_AT=$(date '+%Y-%m-%d %H:%M:%S')
+  - export COMMIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+  - export COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
+  - export COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')
+
+notify_telegram:
+  script:
+    - |
+      curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+        -d chat_id="${TELEGRAM_CHAT_ID}" \
+        -d text="$1"
+
 build-job:
   stage: build
   script:
+    - ./notify_telegram "🚀 Build started\nBranch: ${COMMIT_BRANCH}\nAuthor: ${COMMIT_AUTHOR}\nMessage: ${COMMIT_MESSAGE}\nTime: ${JOB_STARTED_AT}"
     - docker build -t qazo-namoz-image .
   only:
     - main
+  after_script:
+    - |
+      if [ "$CI_JOB_STATUS" == "failed" ]; then
+        ./notify_telegram "❌ Build failed\nBranch: ${COMMIT_BRANCH}\nAuthor: ${COMMIT_AUTHOR}\nMessage: ${COMMIT_MESSAGE}\nTime: ${JOB_STARTED_AT}"
+      fi
 
 deploy-job:
   stage: deploy
-  script: 
+  script:
     - docker-compose up -d
   only:
     - main
+  after_script:
+    - |
+      if [ "$CI_JOB_STATUS" == "success" ]; then
+        ./notify_telegram "✅ Deploy succeeded\nBranch: ${COMMIT_BRANCH}\nAuthor: ${COMMIT_AUTHOR}\nMessage: ${COMMIT_MESSAGE}\nTime: ${JOB_STARTED_AT}"
+      else
+        ./notify_telegram "❌ Deploy failed\nBranch: ${COMMIT_BRANCH}\nAuthor: ${COMMIT_AUTHOR}\nMessage: ${COMMIT_MESSAGE}\nTime: ${JOB_STARTED_AT}"
+      fi
