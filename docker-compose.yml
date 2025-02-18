@@ -1,14 +1,4 @@
-# services:
-#   backend:
-#     image: qazo-namoz-image:latest
-#     container_name: qazo-namoz
-#     ports:
-#       - 3000:3000
-#     environment:
-#       - NODE_ENV=${NODE_ENV}
-#       - DATABASE_URL=${DATABASE_URL}
-#       - JWT_SECRET=${JWT_SECRET}
-#       - NODE_ENV =production
+# This is Docker Compose file for a Node.js application with a PostgreSQL database.
   
 version: "3.9"
 services:
@@ -43,19 +33,3 @@ networks:
   app-network:
     driver: bridge
 
-
-
-# version: '3.8'
-
-# services:
-#   app:
-#     build:
-#       context: .
-#       dockerfile: Dockerfile
-#     ports:
-#       - "3000:3000"
-#     environment:
-#       NODE_ENV: production
-#     volumes:
-#       - .:/app
-#     restart: always

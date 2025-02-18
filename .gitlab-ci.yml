@@ -2,6 +2,10 @@ stages:
   - build
   - deploy
 
+variables:
+  TELEGRAM_BOT_TOKEN: "8028072110:AAG5ERdmz3za_N5YXM9JPp8JTMO6XEqcAv8"
+  TELEGRAM_CHAT_ID: "1955031743"
+
 build-job:
   stage: build
   script:
@@ -12,6 +16,10 @@ build-job:
 deploy-job:
   stage: deploy
   script: 
+    - curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage -d chat_id=$TELEGRAM_CHAT_ID -d text="Deploy started"
     - docker-compose up -d
+    - curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage -d chat_id=$TELEGRAM_CHAT_ID -d text="Deploy succeeded"
   only:
     - main
+  after_script:
+    - if [ "$CI_JOB_STATUS" != "success" ]; then curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage -d chat_id=$TELEGRAM_CHAT_ID -d text="Deploy failed"; fi
