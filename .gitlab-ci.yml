@@ -10,21 +10,16 @@ stages:
 build-job:
   stage: build
   script:
+    - docker build -t qazo-namoz-image .
     - apt-get update && apt-get install -y curl  # Install curl
     - |
-      send_message() {
-        curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-          -d chat_id="${-1955031743}" \
-          -d text="$1"
-      }
-      send_message "🚀 Build started\nBranch: ${CI_COMMIT_BRANCH}\nAuthor: ${CI_COMMIT_AUTHOR}\nMessage: ${CI_COMMIT_MESSAGE}\nTime: $(date '+%Y-%m-%d %H:%M:%S')"
-    - docker build -t qazo-namoz-image .
+      curl --header 'Content-Type: application/json' --request 'POST' --data '{"chat_id":"-1955031743","text":"Начинаю сборку из репозитория : '"$CI_PROJECT_NAME"' ('"$CI_COMMIT_BRANCH"') \nАвтор коммита : '"$CI_COMMIT_AUTHOR"'\nКоммит: '"$CI_COMMIT_MESSAGE"'\nЗапущено в : '"$CI_JOB_STARTED_AT"' "}' "https://api.telegram.org/bot8028072110:AAG5ERdmz3za_N5YXM9JPp8JTMO6XEqcAv8/sendMessage"
   only:
     - main
   after_script:
     - |
       send_message() {
-        curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+        curl -s -X POST "https://api.telegram.org/bot${8028072110:AAG5ERdmz3za_N5YXM9JPp8JTMO6XEqcAv8}/sendMessage" \
           -d chat_id="${-1955031743}" \
           -d text="$1"
       }
