@@ -3,8 +3,8 @@ stages:
   - deploy
 
 variables:
-  TELEGRAM_BOT_TOKEN: "8028072110:AAG5ERdmz3za_N5YXM9JPp8JTMO6XEqcAv8"
-  TELEGRAM_CHAT_ID: "1955031743"
+  TELEGRAM_BOT_TOKEN: '8028072110:AAG5ERdmz3za_N5YXM9JPp8JTMO6XEqcAv8'
+  TELEGRAM_CHAT_ID: '1955031743'
 
 build-job:
   stage: build
@@ -18,7 +18,12 @@ build-job:
 
 deploy-job:
   stage: deploy
-  image: curlimages/curl:latest
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - apk add --no-cache curl
+    - apk add --no-cache docker-compose
   script:
     - curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage -d chat_id=$TELEGRAM_CHAT_ID -d text="Deploy started"
     - docker-compose up -d
