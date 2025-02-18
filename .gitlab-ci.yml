@@ -13,11 +13,11 @@ build-job:
     - docker:dind
   before_script:
     - apk add --no-cache curl
-    - curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage -d chat_id=$TELEGRAM_CHAT_ID -d text="⏰Deploy started\n Project :$CI_PROJECT_NAME \n Branch :$CI_COMMIT_REF_NAME \n Commit :$CI_COMMIT_SHORT_SHA \n started:$CI_JOB_STARTED_AT"
+    - curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage -d chat_id=$TELEGRAM_CHAT_ID -d text="⏰Deploy started%0A Project :$CI_PROJECT_NAME %0A Branch :$CI_COMMIT_REF_NAME %0A Commit :$CI_COMMIT_SHORT_SHA %0A started:$CI_JOB_STARTED_AT"
   script:
     - docker build -t qazo-namoz-image .
   after_script:
-    - if [ "$CI_JOB_STATUS" != "success" ]; then curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage -d chat_id=$TELEGRAM_CHAT_ID -d text="🚫Build failed\n Project :$CI_PROJECT_NAME \n Branch :$CI_COMMIT_REF_NAME \n Commit :$CI_COMMIT_SHORT_SHA \n Finished:$CI_JOB_FINISHED_AT"; fi
+    - if [ "$CI_JOB_STATUS" != "success" ]; then curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage -d chat_id=$TELEGRAM_CHAT_ID -d text="🚫Build failed%0A Project :$CI_PROJECT_NAME %0A Branch :$CI_COMMIT_REF_NAME %0A Commit :$CI_COMMIT_SHORT_SHA %0A Finished:$CI_JOB_FINISHED_AT"; fi
 
   only:
     - main
@@ -32,8 +32,8 @@ deploy-job:
     - apk add --no-cache docker-compose
   script:
     - docker-compose up -d
-    - curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage -d chat_id=$TELEGRAM_CHAT_ID -d text="✅Deploy succeeded\n Project :$CI_PROJECT_NAME \n Branch :$CI_COMMIT_REF_NAME \n Commit :$CI_COMMIT_SHORT_SHA \n Finished:$CI_JOB_FINISHED_AT"
+    - curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage -d chat_id=$TELEGRAM_CHAT_ID -d text="✅Deploy succeeded%0A Project :$CI_PROJECT_NAME %0A Branch :$CI_COMMIT_REF_NAME %0A Commit :$CI_COMMIT_SHORT_SHA %0A Finished:$CI_JOB_FINISHED_AT"
   only:
     - main
   after_script:
-    - if [ "$CI_JOB_STATUS" != "success" ]; then curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage -d chat_id=$TELEGRAM_CHAT_ID -d text="🚫Deploy failed\n Project :$CI_PROJECT_NAME \n Branch :$CI_COMMIT_REF_NAME \n Commit :$CI_COMMIT_SHORT_SHA \n Finished:$CI_JOB_FINISHED_AT"; fi
+    - if [ "$CI_JOB_STATUS" != "success" ]; then curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage -d chat_id=$TELEGRAM_CHAT_ID -d text="🚫Deploy failed%0A Project :$CI_PROJECT_NAME %0A Branch :$CI_COMMIT_REF_NAME %0A Commit :$CI_COMMIT_SHORT_SHA %0A Finished:$CI_JOB_FINISHED_AT"; fi
