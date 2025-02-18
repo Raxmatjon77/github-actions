@@ -6,9 +6,8 @@ variables:
   TELEGRAM_BOT_TOKEN: "8028072110:AAG5ERdmz3za_N5YXM9JPp8JTMO6XEqcAv8"
   TELEGRAM_CHAT_ID: "1955031743"
 
-# Function to send Telegram message
-send_telegram_message:
-  stage: .pre
+build-job:
+  stage: build
   script:
     - |
       send_message() {
@@ -16,17 +15,17 @@ send_telegram_message:
           -d chat_id="${TELEGRAM_CHAT_ID}" \
           -d text="$1"
       }
-      export -f send_message
-
-build-job:
-  stage: build
-  script:
-    - send_message "🚀 Build started\nBranch: ${CI_COMMIT_BRANCH}\nAuthor: ${CI_COMMIT_AUTHOR}\nMessage: ${CI_COMMIT_MESSAGE}\nTime: $(date '+%Y-%m-%d %H:%M:%S')"
+      send_message "🚀 Build started\nBranch: ${CI_COMMIT_BRANCH}\nAuthor: ${CI_COMMIT_AUTHOR}\nMessage: ${CI_COMMIT_MESSAGE}\nTime: $(date '+%Y-%m-%d %H:%M:%S')"
     - docker build -t qazo-namoz-image .
   only:
     - main
   after_script:
     - |
+      send_message() {
+        curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+          -d chat_id="${TELEGRAM_CHAT_ID}" \
+          -d text="$1"
+      }
       if [[ "$CI_JOB_STATUS" == "failed" ]]; then
         send_message "❌ Build failed\nBranch: ${CI_COMMIT_BRANCH}\nAuthor: ${CI_COMMIT_AUTHOR}\nMessage: ${CI_COMMIT_MESSAGE}\nTime: $(date '+%Y-%m-%d %H:%M:%S')"
       fi
@@ -39,6 +38,11 @@ deploy-job:
     - main
   after_script:
     - |
+      send_message() {
+        curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+          -d chat_id="${TELEGRAM_CHAT_ID}" \
+          -d text="$1"
+      }
       if [[ "$CI_JOB_STATUS" == "success" ]]; then
         send_message "✅ Deploy succeeded\nBranch: ${CI_COMMIT_BRANCH}\nAuthor: ${CI_COMMIT_AUTHOR}\nMessage: ${CI_COMMIT_MESSAGE}\nTime: $(date '+%Y-%m-%d %H:%M:%S')"
       else
