@@ -7,10 +7,6 @@ stages:
   - build
   - deploy
 
-variables:
-  TELEGRAM_BOT_TOKEN: "token"
-  -1955031743: "chat_id"
-
 build-job:
   stage: build
   script:
