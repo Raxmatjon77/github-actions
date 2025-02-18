@@ -8,8 +8,8 @@ stages:
   - deploy
 
 variables:
-  AAG5ERdmz3za_N5YXM9JPp8JTMO6XEqcAv8: "token"
-  1955031743: "chat_id"
+  TELEGRAM_BOT_TOKEN: "token"
+  -1955031743: "chat_id"
 
 build-job:
   stage: build
@@ -17,8 +17,8 @@ build-job:
     - apt-get update && apt-get install -y curl  # Install curl
     - |
       send_message() {
-        curl -s -X POST "https://api.telegram.org/bot${AAG5ERdmz3za_N5YXM9JPp8JTMO6XEqcAv8}/sendMessage" \
-          -d chat_id="${1955031743}" \
+        curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+          -d chat_id="${-1955031743}" \
           -d text="$1"
       }
       send_message "🚀 Build started\nBranch: ${CI_COMMIT_BRANCH}\nAuthor: ${CI_COMMIT_AUTHOR}\nMessage: ${CI_COMMIT_MESSAGE}\nTime: $(date '+%Y-%m-%d %H:%M:%S')"
@@ -28,10 +28,31 @@ build-job:
   after_script:
     - |
       send_message() {
-        curl -s -X POST "https://api.telegram.org/bot${AAG5ERdmz3za_N5YXM9JPp8JTMO6XEqcAv8}/sendMessage" \
-          -d chat_id="${1955031743}" \
+        curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+          -d chat_id="${-1955031743}" \
           -d text="$1"
       }
       if [[ "$CI_JOB_STATUS" == "failed" ]]; then
         send_message "❌ Build failed\nBranch: ${CI_COMMIT_BRANCH}\nAuthor: ${CI_COMMIT_AUTHOR}\nMessage: ${CI_COMMIT_MESSAGE}\nTime: $(date '+%Y-%m-%d %H:%M:%S')"
+      fi
+
+deploy-job:
+  stage: deploy
+  script:
+    - apt-get update && apt-get install -y curl  # Install curl
+    - docker-compose up -d
+  only:
+    - main
+  after_script:
+    - apt-get update && apt-get install -y curl  # Install curl in after_script
+    - |
+      send_message() {
+        curl -s -X POST "https://api.telegram.org/bot${8028072110:AAG5ERdmz3za_N5YXM9JPp8JTMO6XEqcAv8}/sendMessage" \
+          -d chat_id="${-1955031743}" \
+          -d text="$1"
+      }
+      if [[ "$CI_JOB_STATUS" == "success" ]]; then
+        send_message "✅ Deploy succeeded\nBranch: ${CI_COMMIT_BRANCH}\nAuthor: ${CI_COMMIT_AUTHOR}\nMessage: ${CI_COMMIT_MESSAGE}\nTime: $(date '+%Y-%m-%d %H:%M:%S')"
+      else
+        send_message "❌ Deploy failed\nBranch: ${CI_COMMIT_BRANCH}\nAuthor: ${CI_COMMIT_AUTHOR}\nMessage: ${CI_COMMIT_MESSAGE}\nTime: $(date '+%Y-%m-%d %H:%M:%S')"
       fi
