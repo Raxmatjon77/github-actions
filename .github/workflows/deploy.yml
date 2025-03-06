@@ -1,0 +1,103 @@
+name: Deploy to GCP VM
+
+on:
+  push:
+    branches:
+      - main # Trigger on push to the main branch
+
+env:
+  IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/qazo-namoz-image
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Authenticate to Google Cloud
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # Set up Google Cloud SDK
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      # Configure Docker to use GCR
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker --quiet
+
+      # Build and push Docker image
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ env.IMAGE_NAME }}:latest .
+          docker push ${{ env.IMAGE_NAME }}:latest
+
+      # Deploy to GCP VM via SSH
+      - name: Deploy to VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_IP }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Pull the latest image
+            docker pull ${{ env.IMAGE_NAME }}:latest
+            
+            # Stop and remove existing containers
+            docker-compose -f docker-compose.yml down || true
+            
+            # Create .env file with environment variables
+            echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+            echo "JWT_AT_SECRET=${{ secrets.JWT_AT_SECRET }}" >> .env
+            echo "JWT_RT_SECRET=${{ secrets.JWT_RT_SECRET }}" >> .env
+            echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
+            echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
+            echo "DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}" >> .env
+            
+            # Copy docker-compose.yml to VM (if not already there)
+            echo "${{ github.sha }}" # Dummy step to ensure file is updated
+            cat > docker-compose.yml << 'EOF'
+            ${{ toJSON(yaml) }}
+            EOF
+            
+            # Start the application
+            docker-compose -f docker-compose.yml up -d
+
+        env:
+          yaml: |
+            version: "3.9"
+            services:
+              backend:
+                image: ${{ env.IMAGE_NAME }}:latest
+                container_name: qazo-namoz
+                ports:
+                  - "3000:3000"
+                environment:
+                  NODE_ENV: ${NODE_ENV}
+                  DATABASE_URL: ${DATABASE_URL}
+                  JWT_AT_SECRET: ${JWT_AT_SECRET}
+                  JWT_RT_SECRET: ${JWT_RT_SECRET}
+                networks:
+                  - app-network
+              db:
+                image: postgres
+                container_name: postgres-db
+                ports:
+                  - 5432:5432
+                networks:
+                  - app-network
+                environment:
+                  POSTGRES_USER: ${DATABASE_USER}
+                  POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+                  POSTGRES_DB: ${DATABASE_DATABASE}
+            networks:
+              app-network:
+                driver: bridge
