@@ -25,10 +25,14 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "echo 'SSH connection successful'"
 
-      - name: Prepare files for deployment
+      - name: Create deployment directory
         run: |
-          # Create a tarball of the repo, excluding .git directory
-          tar --exclude='.git' -czf deploy.tar.gz .
+          # Create a clean directory for deployment files
+          mkdir -p ./deploy_files
+          # Copy all files excluding .git
+          rsync -av --exclude='.git' ./ ./deploy_files/
+          # Create a tarball
+          cd ./deploy_files && tar -czf ../deploy.tar.gz .
 
       - name: Copy files to GCP VM
         if: success()
