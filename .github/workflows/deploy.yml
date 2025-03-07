@@ -1,4 +1,4 @@
-name: Deploy to GCP VM
+name: Deploy with Self-Hosted Runner
 
 on:
   push:
@@ -7,71 +7,32 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup SSH Key
+      - name: Set up environment file
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan ${{ secrets.GCP_HOST }} >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
+          echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "JWT_AT_SECRET=${{ secrets.JWT_AT_SECRET }}" >> .env
+          echo "JWT_RT_SECRET=${{ secrets.JWT_RT_SECRET }}" >> .env
+          echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
+          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
+          echo "DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}" >> .env
 
-      - name: Test SSH Connection
+      - name: Build and deploy with Docker Compose
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "echo 'SSH connection successful'"
-
-      - name: Copy Docker Compose file
-        run: |
-          scp -i ~/.ssh/id_rsa docker-compose.yml ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }}:/home/${{ secrets.GCP_USERNAME }}/docker-compose.yml
-
-      - name: Deploy on GCP VM
-        run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} << 'ENDSSH'
-            # Create .env file
-            echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
-            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-            echo "JWT_AT_SECRET=${{ secrets.JWT_AT_SECRET }}" >> .env
-            echo "JWT_RT_SECRET=${{ secrets.JWT_RT_SECRET }}" >> .env
-            echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
-            echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
-            echo "DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}" >> .env
-            
-            # Make sure Docker is installed
-            if ! command -v docker &> /dev/null; then
-              echo "Installing Docker..."
-              sudo apt-get update
-              sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-              curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
-              sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
-              sudo apt-get update
-              sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-              sudo usermod -aG docker $USER
-            fi
-            
-            # Make sure Docker Compose is installed
-            if ! command -v docker-compose &> /dev/null; then
-              echo "Installing Docker Compose..."
-              sudo apt-get update
-              sudo apt-get install -y docker-compose-plugin
-              
-              # If that fails, try the alternative method
-              if ! command -v docker-compose &> /dev/null; then
-                LATEST_COMPOSE=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
-                sudo curl -L "https://github.com/docker/compose/releases/download/${LATEST_COMPOSE}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                sudo chmod +x /usr/local/bin/docker-compose
-              fi
-            fi
-            
-            # Build and start the containers
-            sudo docker-compose down || true
-            sudo docker-compose build --no-cache
-            sudo docker-compose up -d
-            
-            # Clean up unused images
-            sudo docker image prune -f
-          ENDSSH
+          # Stop and remove existing containers
+          docker-compose down || true
+          
+          # Build new images with no cache to ensure fresh build
+          docker-compose build --no-cache
+          
+          # Start containers in detached mode
+          docker-compose up -d
+          
+          # Clean up unused images
+          docker image prune -f
