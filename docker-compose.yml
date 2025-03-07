@@ -3,13 +3,13 @@
 version: "3.9"
 services:
   backend:
-    image: qazo-namoz-image:latest
+    image: test-action:latest
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: qazo-namoz
+    container_name: test-action
     ports:
-      - "3000:3000"
+      - "6000:3000"
     environment:
       NODE_ENV: ${NODE_ENV}
       DATABASE_URL: ${DATABASE_URL}
@@ -17,11 +17,11 @@ services:
       JWT_RT_SECRET: ${JWT_RT_SECRET}
     networks:
       - app-network
-  db:
+  db1:
     image: postgres
     container_name: postgres-db
     ports:
-      - 5432:5432
+      - 5433:5432
     networks:
       - app-network
     environment:
