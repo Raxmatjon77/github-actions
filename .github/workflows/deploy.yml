@@ -25,11 +25,22 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "echo 'SSH connection successful'"
 
+      - name: Prepare files for deployment
+        run: |
+          # Create a tarball of the repo, excluding .git directory
+          tar --exclude='.git' -czf deploy.tar.gz .
+
       - name: Copy files to GCP VM
         if: success()
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "mkdir -p /home/${{ secrets.GCP_USERNAME }}/app"
-          scp -i ~/.ssh/id_rsa -r . ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }}:/home/${{ secrets.GCP_USERNAME }}/app
+          # Create deploy directory with proper permissions
+          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "sudo mkdir -p /home/${{ secrets.GCP_USERNAME }}/app && sudo chown ${{ secrets.GCP_USERNAME }}:${{ secrets.GCP_USERNAME }} /home/${{ secrets.GCP_USERNAME }}/app"
+          
+          # Copy the tarball
+          scp -i ~/.ssh/id_rsa deploy.tar.gz ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }}:/home/${{ secrets.GCP_USERNAME }}/app/
+          
+          # Extract on the remote server
+          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "cd /home/${{ secrets.GCP_USERNAME }}/app && tar -xzf deploy.tar.gz && rm deploy.tar.gz"
 
       - name: Setup Docker and Docker Compose on VM
         if: success()
@@ -57,8 +68,6 @@ jobs:
             # Alternative Docker Compose installation if needed
             if ! command -v docker-compose &> /dev/null && ! command -v docker compose &> /dev/null; then
               echo "Installing Docker Compose via alternative method..."
-              DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
-              mkdir -p $DOCKER_CONFIG/cli-plugins
               LATEST_COMPOSE=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
               sudo curl -L "https://github.com/docker/compose/releases/download/${LATEST_COMPOSE}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
