@@ -21,22 +21,50 @@ jobs:
           ssh-keyscan ${{ secrets.GCP_HOST }} >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Debug SSH Key
-        run: |
-          ls -la ~/.ssh/
-          cat ~/.ssh/id_rsa | wc -l
-          echo "First line of key:"
-          head -n 1 ~/.ssh/id_rsa
-
       - name: Test SSH Connection
         run: |
-          ssh -v -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "echo 'SSH connection successful'"
+          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "echo 'SSH connection successful'"
 
       - name: Copy files to GCP VM
         if: success()
         run: |
           ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "mkdir -p /home/${{ secrets.GCP_USERNAME }}/app"
           scp -i ~/.ssh/id_rsa -r . ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }}:/home/${{ secrets.GCP_USERNAME }}/app
+
+      - name: Setup Docker and Docker Compose on VM
+        if: success()
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} << 'ENDSSH'
+            # Check if Docker is installed
+            if ! command -v docker &> /dev/null; then
+              echo "Installing Docker..."
+              sudo apt-get update
+              sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+              curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+              sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+              sudo apt-get update
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+              sudo usermod -aG docker $USER
+            fi
+            
+            # Check if Docker Compose is installed
+            if ! command -v docker compose &> /dev/null; then
+              echo "Installing Docker Compose..."
+              sudo apt-get update
+              sudo apt-get install -y docker-compose-plugin
+            fi
+            
+            # Alternative Docker Compose installation if needed
+            if ! command -v docker-compose &> /dev/null && ! command -v docker compose &> /dev/null; then
+              echo "Installing Docker Compose via alternative method..."
+              DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+              mkdir -p $DOCKER_CONFIG/cli-plugins
+              LATEST_COMPOSE=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
+              sudo curl -L "https://github.com/docker/compose/releases/download/${LATEST_COMPOSE}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+              docker-compose --version
+            fi
+          ENDSSH
 
       - name: Deploy on GCP VM
         if: success()
@@ -50,7 +78,17 @@ jobs:
             echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
             echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
             echo "DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}" >> .env
-            docker-compose down || true
-            docker-compose up --build -d
-            docker image prune -f
+            
+            # Use Docker Compose V2 syntax if available
+            if command -v docker compose &> /dev/null; then
+              echo "Using Docker Compose V2..."
+              sudo docker compose down || true
+              sudo docker compose up --build -d
+            else
+              echo "Using Docker Compose V1..."
+              sudo docker-compose down || true
+              sudo docker-compose up --build -d
+            fi
+            
+            sudo docker image prune -f
           ENDSSH
