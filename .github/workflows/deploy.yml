@@ -25,32 +25,23 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "echo 'SSH connection successful'"
 
-      - name: Create deployment directory
+      - name: Copy Docker Compose file
         run: |
-          # Create a clean directory for deployment files
-          mkdir -p ./deploy_files
-          # Copy all files excluding .git
-          rsync -av --exclude='.git' ./ ./deploy_files/
-          # Create a tarball
-          cd ./deploy_files && tar -czf ../deploy.tar.gz .
+          scp -i ~/.ssh/id_rsa docker-compose.yml ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }}:/home/${{ secrets.GCP_USERNAME }}/docker-compose.yml
 
-      - name: Copy files to GCP VM
-        if: success()
-        run: |
-          # Create deploy directory with proper permissions
-          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "sudo mkdir -p /home/${{ secrets.GCP_USERNAME }}/app && sudo chown ${{ secrets.GCP_USERNAME }}:${{ secrets.GCP_USERNAME }} /home/${{ secrets.GCP_USERNAME }}/app"
-          
-          # Copy the tarball
-          scp -i ~/.ssh/id_rsa deploy.tar.gz ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }}:/home/${{ secrets.GCP_USERNAME }}/app/
-          
-          # Extract on the remote server
-          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "cd /home/${{ secrets.GCP_USERNAME }}/app && tar -xzf deploy.tar.gz && rm deploy.tar.gz"
-
-      - name: Setup Docker and Docker Compose on VM
-        if: success()
+      - name: Deploy on GCP VM
         run: |
           ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} << 'ENDSSH'
-            # Check if Docker is installed
+            # Create .env file
+            echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+            echo "JWT_AT_SECRET=${{ secrets.JWT_AT_SECRET }}" >> .env
+            echo "JWT_RT_SECRET=${{ secrets.JWT_RT_SECRET }}" >> .env
+            echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
+            echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
+            echo "DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}" >> .env
+            
+            # Make sure Docker is installed
             if ! command -v docker &> /dev/null; then
               echo "Installing Docker..."
               sudo apt-get update
@@ -62,46 +53,25 @@ jobs:
               sudo usermod -aG docker $USER
             fi
             
-            # Check if Docker Compose is installed
-            if ! command -v docker compose &> /dev/null; then
+            # Make sure Docker Compose is installed
+            if ! command -v docker-compose &> /dev/null; then
               echo "Installing Docker Compose..."
               sudo apt-get update
               sudo apt-get install -y docker-compose-plugin
+              
+              # If that fails, try the alternative method
+              if ! command -v docker-compose &> /dev/null; then
+                LATEST_COMPOSE=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
+                sudo curl -L "https://github.com/docker/compose/releases/download/${LATEST_COMPOSE}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                sudo chmod +x /usr/local/bin/docker-compose
+              fi
             fi
             
-            # Alternative Docker Compose installation if needed
-            if ! command -v docker-compose &> /dev/null && ! command -v docker compose &> /dev/null; then
-              echo "Installing Docker Compose via alternative method..."
-              LATEST_COMPOSE=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
-              sudo curl -L "https://github.com/docker/compose/releases/download/${LATEST_COMPOSE}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-              docker-compose --version
-            fi
-          ENDSSH
-
-      - name: Deploy on GCP VM
-        if: success()
-        run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} << 'ENDSSH'
-            cd /home/${{ secrets.GCP_USERNAME }}/app
-            echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
-            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-            echo "JWT_AT_SECRET=${{ secrets.JWT_AT_SECRET }}" >> .env
-            echo "JWT_RT_SECRET=${{ secrets.JWT_RT_SECRET }}" >> .env
-            echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
-            echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
-            echo "DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}" >> .env
+            # Build and start the containers
+            sudo docker-compose down || true
+            sudo docker-compose build --no-cache
+            sudo docker-compose up -d
             
-            # Use Docker Compose V2 syntax if available
-            if command -v docker compose &> /dev/null; then
-              echo "Using Docker Compose V2..."
-              sudo docker compose down || true
-              sudo docker compose up --build -d
-            else
-              echo "Using Docker Compose V1..."
-              sudo docker-compose down || true
-              sudo docker-compose up --build -d
-            fi
-            
+            # Clean up unused images
             sudo docker image prune -f
           ENDSSH
