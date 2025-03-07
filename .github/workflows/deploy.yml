@@ -13,25 +13,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install SSH key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
-          name: id_rsa
-          known_hosts: ${{ secrets.GCP_SSH_KNOWN_HOSTS }}
-          if_key_exists: replace
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan ${{ secrets.GCP_HOST }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Debug SSH Key
+        run: |
+          ls -la ~/.ssh/
+          cat ~/.ssh/id_rsa | wc -l
+          echo "First line of key:"
+          head -n 1 ~/.ssh/id_rsa
 
       - name: Test SSH Connection
-        run: ssh ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "echo 'SSH connection successful'"
+        run: |
+          ssh -v -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "echo 'SSH connection successful'"
 
       - name: Copy files to GCP VM
+        if: success()
         run: |
-          ssh ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "mkdir -p /home/${{ secrets.GCP_USERNAME }}/app"
-          scp -r . ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }}:/home/${{ secrets.GCP_USERNAME }}/app
+          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} "mkdir -p /home/${{ secrets.GCP_USERNAME }}/app"
+          scp -i ~/.ssh/id_rsa -r . ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }}:/home/${{ secrets.GCP_USERNAME }}/app
 
       - name: Deploy on GCP VM
+        if: success()
         run: |
-          ssh ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} << 'ENDSSH'
+          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} << 'ENDSSH'
             cd /home/${{ secrets.GCP_USERNAME }}/app
             echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
