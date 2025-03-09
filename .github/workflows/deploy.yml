@@ -50,8 +50,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-
-
       - name: Send Telegram Notification (Start Build)
         run: |
           curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
@@ -75,11 +73,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io docker-compose
 
       - name: Deploy with Docker Compose
         run: docker-compose up -d
