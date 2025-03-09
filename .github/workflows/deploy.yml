@@ -74,6 +74,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Install Dependencies
+        run: sudo apt-get install -y docker.io docker-compose
+
       - name: Deploy with Docker Compose
         run: docker-compose up -d
 
