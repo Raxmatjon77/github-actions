@@ -15,14 +15,15 @@ async function bootstrap() {
     .setVersion('1.0')
     .addTag('api')
     .build();
-app.useGlobalInterceptors(new LoggerInterceptor());
+  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalInterceptors(new LoggerInterceptor());
+  
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
-  app.use(new LoggerMiddleware().use);
-  app.useGlobalPipes(new ValidationPipe());
+
   // const PORT = process.env.PORT;
   console.log('hii');
-  
+
   await app.listen(3000);
 }
 
