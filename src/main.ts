@@ -5,17 +5,15 @@ import { ValidationPipe } from '@nestjs/common';
 import { LoggerInterceptor } from './interceptors';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    // logger: false,
-  });
+  const app = await NestFactory.create(AppModule);
   const config = new DocumentBuilder()
     .setTitle('API Documentation')
     .setDescription('The API description for the project ')
     .setVersion('1.0')
     .addTag('api')
     .build();
-    
-  app.useLogger(['log', 'error', 'warn', 'debug', 'verbose']);
+
+  // app.useLogger(['log', 'error', 'warn', 'debug', 'verbose']);
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new LoggerInterceptor());
 
