@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
-import { LoggerMiddleware } from './common/middlewares/logger';
 import { LoggerInterceptor } from './interceptors';
 
 async function bootstrap() {
@@ -17,7 +16,7 @@ async function bootstrap() {
     .build();
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new LoggerInterceptor());
-  
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
