@@ -56,16 +56,6 @@ jobs:
             -d chat_id="$TELEGRAM_CHAT_ID" \
             -d text="⏰Deploy started%0A Project: ${{ github.event.repository.name }} %0A Branch: ${{ github.ref_name }} %0A Commit: ${{ github.event.head_commit.message }}%0A Started: $(date)"
 
-      - name: Set up environment file
-        run: |
-          echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-          echo "JWT_AT_SECRET=${{ secrets.JWT_AT_SECRET }}" >> .env
-          echo "JWT_RT_SECRET=${{ secrets.JWT_RT_SECRET }}" >> .env
-          echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
-          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
-          echo "DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}" >> .env
-
       - name: Build Docker Image
         run: docker build -t qazo-namoz-image .
 
@@ -83,9 +73,15 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      # - name: Install Dependencies
-      #   run: sudo apt-get install -y docker.io docker-compose
+      - name: Set up environment file
+        run: |
+          echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "JWT_AT_SECRET=${{ secrets.JWT_AT_SECRET }}" >> .env
+          echo "JWT_RT_SECRET=${{ secrets.JWT_RT_SECRET }}" >> .env
+          echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
+          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
+          echo "DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}" >> .env
 
       - name: Deploy with Docker Compose
         run: docker-compose up -d
