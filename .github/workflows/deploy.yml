@@ -10,18 +10,18 @@
 #     runs-on: self-hosted
 
 #     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v3
+      # - name: Checkout repository
+      #   uses: actions/checkout@v3
 
-#       - name: Set up environment file
-#         run: |
-#           echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
-#           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-#           echo "JWT_AT_SECRET=${{ secrets.JWT_AT_SECRET }}" >> .env
-#           echo "JWT_RT_SECRET=${{ secrets.JWT_RT_SECRET }}" >> .env
-#           echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
-#           echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
-#           echo "DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}" >> .env
+      # - name: Set up environment file
+      #   run: |
+      #     echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
+      #     echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+      #     echo "JWT_AT_SECRET=${{ secrets.JWT_AT_SECRET }}" >> .env
+      #     echo "JWT_RT_SECRET=${{ secrets.JWT_RT_SECRET }}" >> .env
+      #     echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
+      #     echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
+      #     echo "DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}" >> .env
 
 #       - name: Build and deploy with Docker Compose
 #         run: |
@@ -55,6 +55,16 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
             -d chat_id="$TELEGRAM_CHAT_ID" \
             -d text="⏰Deploy started%0A Project: ${{ github.event.repository.name }} %0A Branch: ${{ github.ref_name }} %0A Commit: ${{ github.event.head_commit.message }}%0A Started: $(date)"
+
+      - name: Set up environment file
+        run: |
+          echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "JWT_AT_SECRET=${{ secrets.JWT_AT_SECRET }}" >> .env
+          echo "JWT_RT_SECRET=${{ secrets.JWT_RT_SECRET }}" >> .env
+          echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
+          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
+          echo "DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}" >> .env
 
       - name: Build Docker Image
         run: docker build -t qazo-namoz-image .
