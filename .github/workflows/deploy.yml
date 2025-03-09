@@ -45,7 +45,7 @@ env:
 jobs:
   build:
     name: Build 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -68,14 +68,14 @@ jobs:
 
   deploy:
     name: Deploy 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
-        run: sudo apt-get install -y docker.io docker-compose
+      # - name: Install Dependencies
+      #   run: sudo apt-get install -y docker.io docker-compose
 
       - name: Deploy with Docker Compose
         run: docker-compose up -d
