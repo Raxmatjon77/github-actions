@@ -13,6 +13,8 @@ import { v4 as uuidv4 } from 'uuid';
 @Injectable()
 export class LoggerInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    console.log('inside logger');
+    
     const request = context.switchToHttp().getRequest();
     const requestId = uuidv4();
     const startTime = Date.now();
