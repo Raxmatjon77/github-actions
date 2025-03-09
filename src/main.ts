@@ -20,7 +20,7 @@ async function bootstrap() {
   app.use(new LoggerMiddleware().use);
   app.useGlobalPipes(new ValidationPipe());
   // const PORT = process.env.PORT;
-  console.log('hii');
+  console.log('hi');
   
   await app.listen(3000);
 }
