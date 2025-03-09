@@ -25,14 +25,9 @@ jobs:
 
       - name: Build and deploy with Docker Compose
         run: |
-          # Stop and remove existing containers
-          docker-compose down || true
-          
-          # Build new images with no cache to ensure fresh build
-          docker-compose build --no-cache
-          
+
+          docker build -t test-action .
+            
           # Start containers in detached mode
           docker-compose up -d
           
-          # Clean up unused images
-          docker image prune -f
