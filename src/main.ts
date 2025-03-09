@@ -14,7 +14,8 @@ async function bootstrap() {
     .setVersion('1.0')
     .addTag('api')
     .build();
-
+    
+  app.useLogger(['log', 'error', 'warn', 'debug', 'verbose']);
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new LoggerInterceptor());
 
