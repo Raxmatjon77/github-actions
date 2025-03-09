@@ -57,7 +57,7 @@ jobs:
             -d text="⏰Deploy started%0A Project: ${{ github.event.repository.name }} %0A Branch: ${{ github.ref_name }} %0A Commit: ${{ github.event.head_commit.message }}%0A Started: $(date)"
 
       - name: Build Docker Image
-        run: docker build -t qazo-namoz-image .
+        run: docker build -t test-action .
 
       - name: Send Telegram Notification (Build Failed)
         if: failure()
