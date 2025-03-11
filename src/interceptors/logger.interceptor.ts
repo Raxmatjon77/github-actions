@@ -21,7 +21,7 @@ export class LoggerInterceptor implements NestInterceptor {
 
     const requestLog = {
       timestamp: new Date().toISOString(),
-      type: 'REQUEST',
+      type: 'request',
       requestId,
       method: request.method,
       url: request.url,
@@ -40,7 +40,7 @@ export class LoggerInterceptor implements NestInterceptor {
         console.log(
           JSON.stringify({
             timestamp: new Date().toISOString(),
-            type: 'RESPONSE',
+            type: 'response',
             requestId,
             duration: `${endTime - startTime}ms`,
             statusCode: context.switchToHttp().getResponse().statusCode,
@@ -51,16 +51,17 @@ export class LoggerInterceptor implements NestInterceptor {
       catchError((error) => {
         const endTime = Date.now();
         const status = error instanceof HttpException ? error.getStatus() : 500;
+        const details = error.getDetails()
 
         console.error(
           JSON.stringify({
             timestamp: new Date().toISOString(),
-            type: 'ERROR',
+            type: 'response',
             requestId,
             duration: `${endTime - startTime}ms`,
             statusCode: status,
             message: error.message,
-            stack: error.stack,
+            stack: details,
           }),
         );
 
