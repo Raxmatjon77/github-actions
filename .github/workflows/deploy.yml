@@ -39,8 +39,8 @@ on:
       - master
 
 env:
-  TELEGRAM_BOT_TOKEN: '8028072110:AAG5ERdmz3za_N5YXM9JPp8JTMO6XEqcAv8'
-  TELEGRAM_CHAT_ID: '1955031743'
+  TELEGRAM_BOT_TOKEN: 'token'
+  TELEGRAM_CHAT_ID: 'chatid'
 
 jobs:
   build:
